@@ -1,14 +1,30 @@
 import wget
+import os
+import torch
+import tempfile
 
-class Downloader:
+class Data:
     def __init__(self) -> None:
         self.url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt' 
         self.chars = 0
-        self.path = 'data/data.txt'
-        filename = wget.download(self.url, out=self.path)
-        with open(self.path, 'r', encoding='utf-8') as f:
-            text = f.read()
-        self.chars = sorted(list(set(text)))
+        self.text = 0
+        self.path = os.path.join('gpt', 'data')
+
+    def download(self):
+        if not os.path.exists('input.txt'):
+            filename = wget.download(self.url)
+        else:
+            filename = 'input.txt'
+        with open(filename, 'r', encoding='utf-8') as f:
+            self.text = f.read()
+        self.chars = sorted(list(set(self.text)))
         self.vocab_size = len(self.chars)
-        print('\nlength of dataset in characters: ', len(text))
-        print('length of char set: ', self.vocab_size)
+        print(self.vocab_size)
+            
+    def tokenize(self):
+        str_to_int = { ch:i for i, ch in enumerate(self.chars)}
+        int_to_str = { i:ch for i, ch in enumerate(self.chars)}
+        encode = lambda s: [str_to_int[c] for c in s]
+        decode = lambda l: ''.join([int_to_str[i] for i in l])
+        data = torch.tensor(encode(self.text), dtype=torch.long)
+        return data
