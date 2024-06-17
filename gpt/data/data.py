@@ -1,13 +1,13 @@
 import wget
 import os
 import torch
-import tempfile
 
 class Data:
     def __init__(self) -> None:
         self.url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt' 
         self.chars = 0
         self.text = 0
+        self.vocab_size = 0
         self.path = os.path.join('gpt', 'data')
 
     def download(self):
@@ -28,3 +28,10 @@ class Data:
         decode = lambda l: ''.join([int_to_str[i] for i in l])
         data = torch.tensor(encode(self.text), dtype=torch.long)
         return data
+    
+    def split(self, t_pct, v_pct):
+        tks = self.tokenize()
+        n = int(t_pct*len(tks))
+        train_data = tks[:n]
+        val_data = tks[n:]
+        return train_data, val_data
