@@ -9,6 +9,8 @@ class Data:
         self.text = 0
         self.vocab_size = 0
         self.path = os.path.join('gpt', 'data')
+        self.str_to_int = 0
+        self.int_to_str = 0
 
     def download(self):
         if not os.path.exists('input.txt'):
@@ -19,13 +21,12 @@ class Data:
             self.text = f.read()
         self.chars = sorted(list(set(self.text)))
         self.vocab_size = len(self.chars)
-        print(self.vocab_size)
             
     def tokenize(self):
-        str_to_int = { ch:i for i, ch in enumerate(self.chars)}
-        int_to_str = { i:ch for i, ch in enumerate(self.chars)}
-        encode = lambda s: [str_to_int[c] for c in s]
-        decode = lambda l: ''.join([int_to_str[i] for i in l])
+        self.str_to_int = { ch:i for i, ch in enumerate(self.chars)}
+        self.int_to_str = { i:ch for i, ch in enumerate(self.chars)}
+        encode = lambda s: [self.str_to_int[c] for c in s]
+        decode = lambda l: ''.join([self.int_to_str[i] for i in l])
         data = torch.tensor(encode(self.text), dtype=torch.long)
         return data
     
