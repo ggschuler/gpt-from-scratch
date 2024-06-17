@@ -1,6 +1,7 @@
 import torch
 from models.bigram import BigramLanguageModel
 torch.manual_seed(1337)
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class DataLoader:
     def __init__(self, train_data, val_data, vocab_size):
@@ -15,4 +16,4 @@ class DataLoader:
         ix = torch.randint(len(data) - self.block_size, (self.batch_size,))
         x = torch.stack([data[i:i+self.block_size] for i in ix])
         y = torch.stack([data[i+1:i+self.block_size+1] for i in ix])
-        return x,y       
+        return x.to(device), y.to(device)
