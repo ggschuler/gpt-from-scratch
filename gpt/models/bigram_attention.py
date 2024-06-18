@@ -54,10 +54,12 @@ class Block(nn.Module):
         head_size = n_embeddings // n_heads
         self.self_attention = MultiHeadAtttention(n_heads, head_size, n_embeddings, block_size)
         self.ffwd = FeedForward(n_embeddings)
+        self.layernorm1 = nn.LayerNorm(n_embeddings)
+        self.layernorm2 = nn.LayerNorm(n_embeddings)
 
     def forward(self, x):
-        x = x + self.self_attention(x)
-        x = x + self.ffwd(x)
+        x = x + self.self_attention(self.layernorm1(x))
+        x = x + self.ffwd(self.layernorm2(x))
         return x
 
 class BigramLanguageModelAttention(nn.Module):
@@ -65,11 +67,12 @@ class BigramLanguageModelAttention(nn.Module):
         self.block_size = block_size
         super().__init__()
         self.token_embedding_table = nn.Embedding(vocab_size, n_embeddings)
-        self.position_embedding_table = nn.Embedding(block_sizse, n_embeddings)
+        self.position_embedding_table = nn.Embedding(block_size, n_embeddings)
         self.blocks = nn.Sequential(
             Block(n_embeddings, n_heads=4, block_size = self.block_size),
             Block(n_embeddings, n_heads=4, block_size = self.block_size),
-            Block(n_embeddings, n_heads=4, block_size = self.block_size)
+            Block(n_embeddings, n_heads=4, block_size = self.block_size),
+            nn.LayerNorm(n_embeddings)
         )
         self.linear = nn.Linear(n_embeddings, vocab_size)
 
