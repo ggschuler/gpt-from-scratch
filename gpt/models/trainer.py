@@ -10,7 +10,7 @@ class Trainer:
         self.lr = 1e-3
         self.num_epochs = 10000
         self.eval_iters = 200
-        self.eval_interval = 300
+        self.eval_interval = 500
         self.loader = loader
         self.n_embeddings = 32 
         self.block_size = 8
@@ -38,7 +38,6 @@ class Trainer:
         for epoch in range(self.num_epochs):
             if epoch % self.eval_interval == 0:
                 losses = self.estimate_loss(model)
-                print(losses['train'])
                 print(f'step {epoch}: train loss {losses["train"]}, val loss {losses["val"]}.')
 
             xb, yb = self.loader.get_batch('train')
@@ -48,5 +47,5 @@ class Trainer:
             optimizer.step()
         
         context = model.generate(torch.zeros((1, 1), dtype=torch.long, device=device), max_new_tokens=500)[0].tolist()
-        decoded = [''.join([dec[i] for i in context])]
+        decoded = ''.join([dec[i] for i in context])
         print(decoded)

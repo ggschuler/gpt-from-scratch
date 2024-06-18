@@ -24,6 +24,25 @@ class AttentionHead(nn.Module):
         out = weights @ v
         return out
 
+class MultiHeadAtttention(nn.Module):
+    def __init__(self, num_heads, head_size, n_embeddings, block_size):
+        super().__init__()
+        self.heads = nn.ModuleList([AttentionHead(head_size, n_embeddings, block_size) for _ in range(num_heads)])
+
+    def forward(self, x):
+        return torch.cat([h(x) for h in self.heads], dim=-1)
+
+class FeedForward(nn.Module):
+    def __init__(self, n_embeddings):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(n_embeddings, n_embeddings),
+            nn.ReLU()
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
 class BigramLanguageModelAttention(nn.Module):
     def __init__(self, vocab_size, n_embeddings, block_size):
         self.block_size = block_size
@@ -34,13 +53,17 @@ class BigramLanguageModelAttention(nn.Module):
         self.self_attention_head = AttentionHead(head_size=n_embeddings, 
                                                  n_embeddings=n_embeddings, 
                                                  block_size=block_size)
+        self.multiheads = MultiHeadAtttention(4, n_embeddings//4, n_embeddings, block_size)
+        self.ffw = FeedForward(n_embeddings)
 
     def forward(self, idx, targets=None):
         B, T = idx.shape
         token_embeddings = self.token_embedding_table(idx) # B T C
         pos_embeddings = self.position_embedding_table(torch.arange(T, device=device)) # positional embeddings do not change the behavior of a bigram model.
         x = token_embeddings + pos_embeddings
-        x = self.self_attention_head(x)
+        #x = self.self_attention_head(x)
+        x = self.multiheads(x)
+        x = self.ffw(x)
         logits = self.linear(x) #batch X time X channels
         if targets is None:
             loss = None
