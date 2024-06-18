@@ -5,15 +5,18 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 class Trainer:
-    def __init__(self, loader):    
-        self.batch_size = 32
-        self.lr = 1e-3
-        self.num_epochs = 10000
+    def __init__(self, loader):
+        self.loader = loader    
+        self.batch_size = self.loader.batch_size
+        self.block_size = self.loader.block_size
+        self.lr = 3e-4
+        self.n_heads = 6
+        self.n_layer = 6
+        self.dropout_rate = 0.2
+        self.num_epochs = 5000
         self.eval_iters = 200
         self.eval_interval = 500
-        self.loader = loader
-        self.n_embeddings = 32 
-        self.block_size = 8
+        self.n_embeddings = 384
     
     @torch.no_grad
     def estimate_loss(self, model):
@@ -32,7 +35,12 @@ class Trainer:
     def train(self, dec):
         print(device)
         #model = BigramLanguageModel(self.loader.vocab_size)
-        model = BigramLanguageModelAttention(self.loader.vocab_size, self.n_embeddings, self.loader.block_size)
+        model = BigramLanguageModelAttention(vocab_size=self.loader.vocab_size, 
+                                             n_embeddings=self.n_embeddings, 
+                                             block_size=self.loader.block_size,
+                                             n_heads=self.n_heads,
+                                             n_layer=self.n_layer,
+                                             dropout_rate=self.dropout_rate)
         model.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=self.lr)
         for epoch in range(self.num_epochs):

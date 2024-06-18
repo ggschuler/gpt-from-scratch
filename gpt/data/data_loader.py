@@ -1,12 +1,10 @@
 import torch
-from models.bigram import BigramLanguageModel
-torch.manual_seed(1337)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class DataLoader:
     def __init__(self, train_data, val_data, vocab_size):
-        self.batch_size = 32
-        self.block_size = 8
+        self.batch_size = 64
+        self.block_size = 256
         self.train_data = train_data
         self.val_data = val_data
         self.vocab_size = vocab_size
