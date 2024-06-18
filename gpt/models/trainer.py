@@ -1,4 +1,5 @@
 from models.bigram import BigramLanguageModel
+from models.bigram_attention import BigramLanguageModelAttention
 import torch
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -11,6 +12,8 @@ class Trainer:
         self.eval_iters = 200
         self.eval_interval = 300
         self.loader = loader
+        self.n_embeddings = 32 
+        self.block_size = 8
     
     @torch.no_grad
     def estimate_loss(self, model):
@@ -28,7 +31,8 @@ class Trainer:
 
     def train(self, dec):
         print(device)
-        model = BigramLanguageModel(self.loader.vocab_size)
+        #model = BigramLanguageModel(self.loader.vocab_size)
+        model = BigramLanguageModelAttention(self.loader.vocab_size, self.n_embeddings, self.loader.block_size)
         model.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=self.lr)
         for epoch in range(self.num_epochs):
