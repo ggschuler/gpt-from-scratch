@@ -1,6 +1,6 @@
-import wget
 import os
 import torch
+import requests
 
 class Data:
     def __init__(self) -> None:
@@ -13,12 +13,16 @@ class Data:
         self.int_to_str = 0
 
     def download(self):
-        if not os.path.exists('input.txt'):
-            filename = wget.download(self.url)
-        else:
-            filename = 'input.txt'
-        with open(filename, 'r', encoding='utf-8') as f:
+        input_file_path = os.path.join(os.path.dirname(__file__), 'input.txt')
+        if not os.path.exists(input_file_path):
+            data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
+        with open(input_file_path, 'w') as f:
+            f.write(requests.get(data_url).text)
+
+        with open(input_file_path, 'r') as f:
             self.text = f.read()
+        print(f"length of dataset in characters: {len(self.text):,}")
+        
         self.chars = sorted(list(set(self.text)))
         self.vocab_size = len(self.chars)
             

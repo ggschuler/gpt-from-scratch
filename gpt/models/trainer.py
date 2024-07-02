@@ -1,6 +1,9 @@
 from models.bigram import BigramLanguageModel
 from models.bigram_attention import BigramLanguageModelAttention
 import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.distributed as dist
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -32,9 +35,12 @@ class Trainer:
         model.train()
         return out
 
-    def train(self, dec):
+    def train(self, dec, rank, world_size):
+        dist.init_process_group(backend='nccl', world_size=world_size,
+                                rank=rank)
+        
+
         print(device)
-        #model = BigramLanguageModel(self.loader.vocab_size)
         model = BigramLanguageModelAttention(vocab_size=self.loader.vocab_size, 
                                              n_embeddings=self.n_embeddings, 
                                              block_size=self.loader.block_size,
@@ -42,13 +48,16 @@ class Trainer:
                                              n_layer=self.n_layer,
                                              dropout_rate=self.dropout_rate)
         model.to(device)
+        model = nn.parallel.DistributedDataParallel(model, device_ids=[rank], output_device=rank)
         optimizer = torch.optim.Adam(model.parameters(), lr=self.lr)
+
         for epoch in range(self.num_epochs):
             if epoch % self.eval_interval == 0:
                 losses = self.estimate_loss(model)
                 print(f'step {epoch}: train loss {losses["train"]}, val loss {losses["val"]}.')
 
             xb, yb = self.loader.get_batch('train')
+            xb, yb = xb.to(device), yb.to(device)
             logits, loss = model(xb, yb)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
@@ -56,4 +65,4 @@ class Trainer:
         
         context = model.generate(torch.zeros((1, 1), dtype=torch.long, device=device), max_new_tokens=500)[0].tolist()
         decoded = ''.join([dec[i] for i in context])
-        print(decoded)
+        #print(decoded)
